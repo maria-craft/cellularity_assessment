@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marrow Cellularity Calculator</title>
+<style>
+  :root{
+    --bg: #10161c;
+    --panel: #161e26;
+    --panel-border: #26323d;
+    --ink: #e7edf2;
+    --ink-dim: #93a3b0;
+    --accent: #5ec8b9;
+    --accent-dim: #2f4f4a;
+    --flag: #e0a458;
+    --flag-bg: #3a2f1c;
+    --ok: #6fc27a;
+    --ok-bg: #1f3226;
+    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    --serif: 'Source Serif 4', Georgia, serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,Segoe UI,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:40px 16px;
+  }
+  .wrap{ width:100%; max-width:640px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 8px 0;
+  }
+  h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:28px;
+    margin:0 0 6px 0;
+    letter-spacing:-.01em;
+  }
+  .sub{ color:var(--ink-dim); font-size:14px; line-height:1.5; margin:0; }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .panel h2{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin:0 0 16px 0;
+    font-weight:600;
+  }
+
+  .dob-row{ display:flex; gap:10px; margin-bottom:16px; }
+  .field{ flex:1; }
+  .field label{
+    display:block;
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-bottom:6px;
+    font-family:var(--mono);
+  }
+  input[type=number], input[type=date]{
+    width:100%;
+    background:#0c1116;
+    border:1px solid var(--panel-border);
+    color:var(--ink);
+    border-radius:6px;
+    padding:10px 10px;
+    font-size:15px;
+    font-family:var(--mono);
+    -moz-appearance:textfield;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+
+  .date-picker-toggle{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--accent);
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    text-decoration:underline;
+    text-underline-offset:3px;
+    margin-bottom:16px;
+  }
+  .datepick-wrap{ display:none; margin-bottom:16px; }
+  .datepick-wrap.show{ display:block; }
+
+  .cell-row{ margin-top:4px; }
+  .cell-row label{
+    display:block;
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-bottom:6px;
+    font-family:var(--mono);
+  }
+  .cell-input-group{ display:flex; align-items:center; gap:10px; }
+  input[type=range]{ flex:1; accent-color:var(--accent); }
+  .cell-num{ width:70px; text-align:center; }
+
+  .age-readout{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-dim);
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--panel-border);
+  }
+  .age-readout strong{ color:var(--accent); font-size:16px; }
+
+  .today-readout{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    margin-bottom:14px;
+  }
+
+  .results{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .result-card{
+    background:#0c1116;
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:16px;
+  }
+  .result-card .label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  .result-card .value{
+    font-family:var(--serif);
+    font-size:34px;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+  .result-card .range-bold{
+    font-size:17px;
+    font-weight:800;
+    color:var(--accent);
+    font-family:var(--mono);
+    margin-bottom:6px;
+  }
+  .result-card .formula{
+    font-size:12px;
+    color:var(--ink-dim);
+    font-family:var(--mono);
+  }
+
+  .source-link{
+    display:inline-block;
+    margin-top:14px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--accent);
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+
+  .ajcp-result-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .ajcp-result-row.single{ grid-template-columns:1fr; }
+  .ajcp-result-item{ display:none; }
+  .ajcp-result-item.active{ display:block; }
+  .ajcp-result-item{
+    background:#0c1116;
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:16px;
+    transition:border-color .15s, background .15s;
+  }
+  .ajcp-result-item.active{
+    border-color:var(--flag);
+    background:var(--flag-bg);
+  }
+  .ajcp-result-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  .ajcp-result-item.active .ajcp-result-label{ color:var(--flag); }
+  .ajcp-result-detail{
+    font-size:13px;
+    font-family:var(--mono);
+    color:var(--ink);
+    line-height:1.5;
+  }
+
+  .verdict{
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    line-height:1.5;
+    font-family:var(--mono);
+  }
+  .verdict .classification{
+    display:block;
+    font-family:var(--serif);
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:.01em;
+    margin-bottom:6px;
+  }
+  .verdict.ok{ background:var(--ok-bg); color:var(--ok); border:1px solid #2b4a34; }
+  .verdict.flag{ background:var(--flag-bg); color:var(--flag); border:1px solid #4a3c22; }
+
+  .disclaimer{
+    color:var(--ink-dim);
+    font-size:11.5px;
+    line-height:1.6;
+    margin-top:24px;
+    padding-top:16px;
+    border-top:1px solid var(--panel-border);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Hematopathology · quick reference</p>
+    <h1>Marrow Cellularity Calculator</h1>
+    <p class="sub">Enter a date of birth and observed bone marrow cellularity. Compares against the classic 100&minus;age rule and the AJCP formula.</p>
+  </header>
+
+  <div class="panel">
+    <h2>Date of Birth</h2>
+    <div class="today-readout" id="todayReadout">Today: —</div>
+    <div class="dob-row">
+      <div class="field">
+        <label for="day">Day</label>
+        <input type="number" id="day" min="1" max="31" placeholder="DD">
+      </div>
+      <div class="field">
+        <label for="month">Month</label>
+        <input type="number" id="month" min="1" max="12" placeholder="MM">
+      </div>
+      <div class="field">
+        <label for="year">Year</label>
+        <input type="number" id="year" min="0" max="2500" placeholder="YYYY">
+      </div>
+    </div>
+    <button class="date-picker-toggle" id="toggleCal">📅 use calendar picker instead</button>
+    <div class="datepick-wrap" id="calWrap">
+      <input type="date" id="calInput" min="0000-01-01" max="2500-12-31">
+    </div>
+
+    <div class="age-readout" id="ageReadout">Patient age: <strong>—</strong></div>
+  </div>
+
+  <div class="panel">
+    <h2>Observed Cellularity</h2>
+    <div class="cell-row">
+      <label for="cellRange">% Cellularity</label>
+      <div class="cell-input-group">
+        <input type="range" id="cellRange" min="1" max="100" value="50">
+        <input type="number" id="cellNum" class="cell-num" min="1" max="100" value="50">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Expected Cellularity</h2>
+    <div class="results">
+      <div class="result-card">
+        <div class="label">Classic rule</div>
+        <div class="value" id="classicVal">—</div>
+        <div class="formula">100 − age</div>
+      </div>
+      <div class="result-card">
+        <div class="label">AJCP formula</div>
+        <div class="value" id="ajcpVal">—</div>
+        <div class="range-bold" id="ajcpBand">—</div>
+        <div class="formula" id="ajcpRange">65 − 0.3×age</div>
+      </div>
+    </div>
+    <a class="source-link" href="https://academic.oup.com/ajcp/article/165/5/aqag039/8689503" target="_blank" rel="noopener">Source: AJCP, Vol 165, Issue 5, aqag039 →</a>
+  </div>
+
+  <div class="panel">
+    <h2>Results according to AJCP</h2>
+    <div class="ajcp-result-row single" id="ajcpResultRow">
+      <div class="ajcp-result-item" id="hypoItem">
+        <div class="ajcp-result-label">Hypocellular</div>
+        <div class="ajcp-result-detail" id="hypoDetail">—</div>
+      </div>
+      <div class="ajcp-result-item" id="hyperItem">
+        <div class="ajcp-result-label">Hypercellular</div>
+        <div class="ajcp-result-detail" id="hyperDetail">—</div>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <p class="disclaimer">
+    AJCP reference: age-predicted cellularity = 65 − (0.3 × age). Acceptance band per age &lt; 20 years: ±20 percentage points; age ≥ 20 years: ±15 percentage points (Vasef et al., AJCP 2026, see source link above). Classic rule of thumb: normal cellularity ≈ 100 − age. Both are population-level estimates, not diagnostic thresholds — interpret alongside clinical context, comorbidities, and marrow patchiness.
+  </p>
+</div>
+
+<script>
+  const dayEl = document.getElementById('day');
+  const monthEl = document.getElementById('month');
+  const yearEl = document.getElementById('year');
+  const calToggle = document.getElementById('toggleCal');
+  const calWrap = document.getElementById('calWrap');
+  const calInput = document.getElementById('calInput');
+  const ageReadout = document.getElementById('ageReadout');
+
+  const cellRange = document.getElementById('cellRange');
+  const cellNum = document.getElementById('cellNum');
+
+  const classicVal = document.getElementById('classicVal');
+  const ajcpVal = document.getElementById('ajcpVal');
+  const ajcpRange = document.getElementById('ajcpRange');
+  const ajcpBand = document.getElementById('ajcpBand');
+  const verdict = document.getElementById('verdict');
+  const todayReadout = document.getElementById('todayReadout');
+  const hypoItem = document.getElementById('hypoItem');
+  const hyperItem = document.getElementById('hyperItem');
+  const hypoDetail = document.getElementById('hypoDetail');
+  const hyperDetail = document.getElementById('hyperDetail');
+
+  function formatToday() {
+    const t = new Date();
+    const dd = String(t.getDate()).padStart(2, '0');
+    const mm = String(t.getMonth() + 1).padStart(2, '0');
+    const yyyy = t.getFullYear();
+    todayReadout.textContent = `Today: ${dd} / ${mm} / ${yyyy}`;
+  }
+  formatToday();
+
+  calToggle.addEventListener('click', () => {
+    calWrap.classList.toggle('show');
+  });
+
+  calInput.addEventListener('change', () => {
+    if (!calInput.value) return;
+    const [y, m, d] = calInput.value.split('-');
+    yearEl.value = parseInt(y, 10);
+    monthEl.value = parseInt(m, 10);
+    dayEl.value = parseInt(d, 10);
+    compute();
+  });
+
+  [dayEl, monthEl, yearEl].forEach(el => el.addEventListener('input', compute));
+  cellRange.addEventListener('input', () => { cellNum.value = cellRange.value; compute(); });
+  cellNum.addEventListener('input', () => {
+    let v = Math.max(1, Math.min(100, parseInt(cellNum.value || '0', 10) || 0));
+    cellRange.value = v;
+    compute();
+  });
+
+  function calcAge(day, month, year) {
+    const today = new Date();
+    const dob = new Date(year, month - 1, day);
+    if (isNaN(dob.getTime())) return null;
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  }
+
+  function compute() {
+    const day = parseInt(dayEl.value, 10);
+    const month = parseInt(monthEl.value, 10);
+    const year = parseInt(yearEl.value, 10);
+    const cellularity = parseInt(cellNum.value, 10);
+
+    const hasDay = !!day && day >= 1 && day <= 31;
+    const hasMonth = !!month && month >= 1 && month <= 12;
+    const hasYear = !!year && year >= 0 && year <= 2500;
+
+    if (!hasYear) {
+      ageReadout.innerHTML = 'Patient age: <strong>—</strong>';
+      classicVal.textContent = '—';
+      ajcpVal.textContent = '—';
+      ajcpBand.textContent = '—';
+      verdict.style.display = 'none';
+      hypoDetail.textContent = '—';
+      hyperDetail.textContent = '—';
+      hypoItem.classList.remove('active');
+      hyperItem.classList.remove('active');
+      return;
+    }
+
+    let age;
+    let ageIsApprox = false;
+    if (hasDay && hasMonth) {
+      age = calcAge(day, month, year);
+      if (age === null || age < 0) {
+        ageReadout.innerHTML = 'Patient age: <strong>invalid date</strong>';
+        classicVal.textContent = '—';
+        ajcpVal.textContent = '—';
+        verdict.style.display = 'none';
+        return;
+      }
+    } else {
+      // year-only entry: approximate age as current year minus birth year
+      age = new Date().getFullYear() - year;
+      ageIsApprox = true;
+      if (age < 0) {
+        ageReadout.innerHTML = 'Patient age: <strong>invalid date</strong>';
+        classicVal.textContent = '—';
+        ajcpVal.textContent = '—';
+        verdict.style.display = 'none';
+        return;
+      }
+    }
+
+    ageReadout.innerHTML = ageIsApprox
+      ? `Patient age: <strong>${age} years</strong> (approx., year only)`
+      : `Patient age: <strong>${age} years</strong>`;
+
+    const classic = Math.max(0, 100 - age);
+    classicVal.textContent = classic + '%';
+
+    const bandPts = age < 20 ? 20 : 15;
+    const ajcp = 65 - 0.3 * age;
+    const ajcpLow = Math.max(0, ajcp - bandPts);
+    const ajcpHigh = Math.min(100, ajcp + bandPts);
+    ajcpVal.textContent = ajcp.toFixed(1) + '%';
+    ajcpBand.textContent = `${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%`;
+    ajcpRange.textContent = `65 − 0.3×${age} = ${ajcp.toFixed(1)}%, ±${bandPts} pts (age ${age < 20 ? '<20' : '≥20'})`;
+
+    verdict.style.display = 'block';
+    const diffClassic = cellularity - classic;
+
+    const distToLow = cellularity - ajcpLow;
+    const distToHigh = cellularity - ajcpHigh;
+
+    hypoItem.classList.toggle('active', cellularity < ajcpLow);
+    hyperItem.classList.toggle('active', cellularity > ajcpHigh);
+
+    hypoDetail.innerHTML = `${cellularity}% is ${Math.abs(distToLow).toFixed(0)} pts ${distToLow < 0 ? 'below' : 'above'} the lower limit of normal (${ajcpLow.toFixed(0)}%).<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
+    hyperDetail.innerHTML = `${cellularity}% is ${Math.abs(distToHigh).toFixed(0)} pts ${distToHigh > 0 ? 'above' : 'below'} the upper limit of normal (${ajcpHigh.toFixed(0)}%).<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
+
+    if (cellularity > ajcpHigh) {
+      verdict.className = 'verdict flag';
+      verdict.innerHTML = `<span class="classification">HYPERCELLULAR</span>${cellularity}% is above the expected range for age ${age} (${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%). Classic rule delta: ${diffClassic > 0 ? '+' : ''}${diffClassic.toFixed(0)} pts vs 100−age.`;
+    } else if (cellularity < ajcpLow) {
+      verdict.className = 'verdict flag';
+      verdict.innerHTML = `<span class="classification">HYPOCELLULAR</span>${cellularity}% is below the expected range for age ${age} (${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%). Classic rule delta: ${diffClassic > 0 ? '+' : ''}${diffClassic.toFixed(0)} pts vs 100−age.`;
+    } else {
+      verdict.className = 'verdict ok';
+      verdict.innerHTML = `<span class="classification">NORMOCELLULAR</span>${cellularity}% falls within the expected range for age ${age} (${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%). Classic rule delta: ${diffClassic > 0 ? '+' : ''}${diffClassic.toFixed(0)} pts vs 100−age.`;
+    }
+  }
+
+  compute();
+</script>
+</body>
+</html>
