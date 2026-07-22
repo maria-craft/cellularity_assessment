@@ -292,7 +292,7 @@
         <div class="label">AJCP formula</div>
         <div class="value" id="ajcpVal">—</div>
         <div class="range-bold" id="ajcpBand">—</div>
-        <div class="formula" id="ajcpRange">65 − 0.3×age</div>
+        <div class="formula" id="ajcpRange">μ = 68 − 0.3455 × age</div>
       </div>
     </div>
     <a class="source-link" href="https://academic.oup.com/ajcp/article/165/5/aqag039/8689503" target="_blank" rel="noopener">Source: AJCP, Vol 165, Issue 5, aqag039 →</a>
@@ -431,7 +431,7 @@
     const ajcpHigh = Math.min(100, ajcp + bandPts);
     ajcpVal.textContent = ajcp.toFixed(1) + '%';
     ajcpBand.textContent = `${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%`;
-    ajcpRange.textContent = `68 − 0.3455×${age} = ${ajcp.toFixed(1)}%, ±${bandPts} pts (age ${age < 20 ? '<20' : '≥20'})`;
+    ajcpRange.textContent = `μ = 68 − 0.3455 × age, ±${bandPts} pts (age ${age < 20 ? '<20' : '≥20'})`;
 
     verdict.style.display = 'block';
     const diffClassic = cellularity - classic;
