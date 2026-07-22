@@ -91,21 +91,6 @@
   input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
 
-  .date-picker-toggle{
-    font-family:var(--mono);
-    font-size:11px;
-    color:var(--accent);
-    background:none;
-    border:none;
-    cursor:pointer;
-    padding:0;
-    text-decoration:underline;
-    text-underline-offset:3px;
-    margin-bottom:16px;
-  }
-  .datepick-wrap{ display:none; margin-bottom:16px; }
-  .datepick-wrap.show{ display:block; }
-
   .cell-row{ margin-top:4px; }
   .cell-row label{
     display:block;
@@ -279,10 +264,6 @@
         <input type="number" id="year" min="0" max="2500" placeholder="YYYY">
       </div>
     </div>
-    <button class="date-picker-toggle" id="toggleCal">📅 use calendar picker instead</button>
-    <div class="datepick-wrap" id="calWrap">
-      <input type="date" id="calInput" min="0000-01-01" max="2500-12-31">
-    </div>
 
     <div class="age-readout" id="ageReadout">Patient age: <strong>—</strong></div>
   </div>
@@ -304,7 +285,8 @@
       <div class="result-card">
         <div class="label">Classic rule</div>
         <div class="value" id="classicVal">—</div>
-        <div class="formula">100 − age</div>
+        <div class="range-bold" id="classicBand">—</div>
+        <div class="formula">100 − age, ± 15 pts</div>
       </div>
       <div class="result-card">
         <div class="label">AJCP formula</div>
@@ -332,7 +314,7 @@
   </div>
 
   <p class="disclaimer">
-    AJCP reference: age-predicted cellularity = 65 − (0.3 × age). Acceptance band per age &lt; 20 years: ±20 percentage points; age ≥ 20 years: ±15 percentage points (Vasef et al., AJCP 2026, see source link above). Classic rule of thumb: normal cellularity ≈ 100 − age. Both are population-level estimates, not diagnostic thresholds — interpret alongside clinical context, comorbidities, and marrow patchiness.
+    AJCP reference: age-predicted cellularity μ = 68 − (0.3455 × age). Acceptance band per age &lt; 20 years: ±20 percentage points; age ≥ 20 years: ±15 percentage points (see source link above). Classic rule of thumb: normal cellularity ≈ 100 − age, ± 15 percentage points. Both are population-level estimates, not diagnostic thresholds — interpret alongside clinical context, comorbidities, and marrow patchiness.
   </p>
 </div>
 
@@ -340,15 +322,13 @@
   const dayEl = document.getElementById('day');
   const monthEl = document.getElementById('month');
   const yearEl = document.getElementById('year');
-  const calToggle = document.getElementById('toggleCal');
-  const calWrap = document.getElementById('calWrap');
-  const calInput = document.getElementById('calInput');
   const ageReadout = document.getElementById('ageReadout');
 
   const cellRange = document.getElementById('cellRange');
   const cellNum = document.getElementById('cellNum');
 
   const classicVal = document.getElementById('classicVal');
+  const classicBand = document.getElementById('classicBand');
   const ajcpVal = document.getElementById('ajcpVal');
   const ajcpRange = document.getElementById('ajcpRange');
   const ajcpBand = document.getElementById('ajcpBand');
@@ -367,19 +347,6 @@
     todayReadout.textContent = `Today: ${dd} / ${mm} / ${yyyy}`;
   }
   formatToday();
-
-  calToggle.addEventListener('click', () => {
-    calWrap.classList.toggle('show');
-  });
-
-  calInput.addEventListener('change', () => {
-    if (!calInput.value) return;
-    const [y, m, d] = calInput.value.split('-');
-    yearEl.value = parseInt(y, 10);
-    monthEl.value = parseInt(m, 10);
-    dayEl.value = parseInt(d, 10);
-    compute();
-  });
 
   [dayEl, monthEl, yearEl].forEach(el => el.addEventListener('input', compute));
   cellRange.addEventListener('input', () => { cellNum.value = cellRange.value; compute(); });
@@ -412,6 +379,7 @@
     if (!hasYear) {
       ageReadout.innerHTML = 'Patient age: <strong>—</strong>';
       classicVal.textContent = '—';
+      classicBand.textContent = '—';
       ajcpVal.textContent = '—';
       ajcpBand.textContent = '—';
       verdict.style.display = 'none';
@@ -429,6 +397,7 @@
       if (age === null || age < 0) {
         ageReadout.innerHTML = 'Patient age: <strong>invalid date</strong>';
         classicVal.textContent = '—';
+        classicBand.textContent = '—';
         ajcpVal.textContent = '—';
         verdict.style.display = 'none';
         return;
@@ -451,15 +420,18 @@
       : `Patient age: <strong>${age} years</strong>`;
 
     const classic = Math.max(0, 100 - age);
+    const classicLow = Math.max(0, classic - 15);
+    const classicHigh = Math.min(100, classic + 15);
     classicVal.textContent = classic + '%';
+    classicBand.textContent = `${classicLow.toFixed(0)}–${classicHigh.toFixed(0)}%`;
 
     const bandPts = age < 20 ? 20 : 15;
-    const ajcp = 65 - 0.3 * age;
+    const ajcp = 68 - 0.3455 * age;
     const ajcpLow = Math.max(0, ajcp - bandPts);
     const ajcpHigh = Math.min(100, ajcp + bandPts);
     ajcpVal.textContent = ajcp.toFixed(1) + '%';
     ajcpBand.textContent = `${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%`;
-    ajcpRange.textContent = `65 − 0.3×${age} = ${ajcp.toFixed(1)}%, ±${bandPts} pts (age ${age < 20 ? '<20' : '≥20'})`;
+    ajcpRange.textContent = `68 − 0.3455×${age} = ${ajcp.toFixed(1)}%, ±${bandPts} pts (age ${age < 20 ? '<20' : '≥20'})`;
 
     verdict.style.display = 'block';
     const diffClassic = cellularity - classic;
