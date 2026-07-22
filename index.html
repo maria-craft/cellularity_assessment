@@ -209,6 +209,21 @@
     color:var(--ink);
     line-height:1.5;
   }
+  .value-circle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    border:2.5px solid currentColor;
+    font-family:var(--serif);
+    font-size:17px;
+    font-weight:800;
+    margin-right:10px;
+    vertical-align:middle;
+  }
+  .range-bracket{ font-weight:700; }
 
   .verdict{
     margin-top:16px;
@@ -455,8 +470,8 @@
     hypoItem.classList.toggle('active', cellularity < ajcpLow);
     hyperItem.classList.toggle('active', cellularity > ajcpHigh);
 
-    hypoDetail.innerHTML = `${cellularity}% is ${Math.abs(distToLow).toFixed(0)} pts ${distToLow < 0 ? 'below' : 'above'} the lower limit of normal (${ajcpLow.toFixed(0)}%).<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
-    hyperDetail.innerHTML = `${cellularity}% is ${Math.abs(distToHigh).toFixed(0)} pts ${distToHigh > 0 ? 'above' : 'below'} the upper limit of normal (${ajcpHigh.toFixed(0)}%).<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
+    hypoDetail.innerHTML = `<span class="value-circle">${cellularity}%</span>is ${Math.abs(distToLow).toFixed(0)} pts ${distToLow < 0 ? 'below' : 'above'} the lower limit of normal <span class="range-bracket">[${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%]</span>.<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
+    hyperDetail.innerHTML = `<span class="value-circle">${cellularity}%</span>is ${Math.abs(distToHigh).toFixed(0)} pts ${distToHigh > 0 ? 'above' : 'below'} the upper limit of normal <span class="range-bracket">[${ajcpLow.toFixed(0)}–${ajcpHigh.toFixed(0)}%]</span>.<br>Band applied: ±${bandPts}% (age ${age < 20 ? '<20' : '≥20'}).`;
 
     if (cellularity > ajcpHigh) {
       verdict.className = 'verdict flag';
